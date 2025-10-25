@@ -9,3 +9,9 @@ format: html
 library(dplyr)
 ```
 
+```{r}
+data = read.csv("data/DATASET_Denuncias_Policiales_Enero 2018 a Agosto 2025.csv", 
+                encoding = "UTF-8", 
+                stringsAsFactors = FALSE)
+```
+
