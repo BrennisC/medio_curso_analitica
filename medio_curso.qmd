@@ -7,11 +7,29 @@ format: html
 
 ```{r}
 library(dplyr)
+library(ggplot2)
+library(readr)
 ```
 
 ```{r}
-data = read.csv("data/DATASET_Denuncias_Policiales_Enero 2018 a Agosto 2025.csv", 
-                encoding = "UTF-8", 
-                stringsAsFactors = FALSE)
-```
+data = read_csv("data/DATASET_Denuncias_Policiales_Enero 2018 a Agosto 2025.csv")
 
+data
+```
+```{r}
+data_distrito_huanuco = data %>%
+  filter(`DPTO_HECHO_NEW` == "HUANUCO") %>%
+  group_by(`DIST_HECHO`) %>%
+  summarise(cantidad = n()) %>%
+  arrange(desc(cantidad))
+
+figure_distrito_huanuco = data_distrito_huanuco %>% ggplot(aes(x = `DIST_HECHO`, y = `cantidad`)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Número de Denuncias por Distrito en Huánuco",
+       x = "Distrito",
+       y = "Número de Denuncias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+figure_distrito_huanuco
+```

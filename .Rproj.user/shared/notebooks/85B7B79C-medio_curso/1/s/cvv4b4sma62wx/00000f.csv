@@ -1,4 +1,0 @@
-"0","data = read.csv(""data/mi_dataset.csv"")
-"
-"2","Error en file(file, ""rt""): no se puede abrir la conexión
-"
