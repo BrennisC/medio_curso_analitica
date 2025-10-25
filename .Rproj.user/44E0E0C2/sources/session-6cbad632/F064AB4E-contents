@@ -3,3 +3,16 @@ title: "medio_curso"
 format: html
 ---
 
+## Análisis de Datos con R
+
+```{r}
+library(dplyr)
+
+```
+
+```{r}
+# Cargar datos
+data = read
+```
+
+
