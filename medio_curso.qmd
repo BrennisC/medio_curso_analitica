@@ -1,35 +1,890 @@
 ---
 title: "medio_curso"
-format: html
+format: pdf
 ---
+Librerias
+```{r}
+library(dplyr)
+library(readr)
 
-## Análisis de Datos con R
+```
+
+### ESTADISTICA DESCRIPTIVA DE DENUNCIAS POLICIALES EN EL PERU (2018-2025)
+
+SE CARGA EL ARCHIVO CON LOS DATOS
+```{r}
+ruta_archivo <- "C:/Users/juan9/OneDrive/Desktop/CICLO VI/ESTADISTICA/DATASET_Denuncias_Policiales_Enero 2018 a Agosto 2025.csv"
+
+# Cargamos los datos en un dataframe de uso general
+mis_datos <- read_csv(ruta_archivo, show_col_types = FALSE)
+
+# Verificamos que se cargó correctamente
+head(mis_datos)
+
+```
+1. MODALIDAD CON MAS DENUNCIAS DESDE EL 2018 HASTA EL 2025
+```{r}
+
+ranking_modalidades <- mis_datos %>%
+  filter(P_MODALIDADES != "Otros") %>%
+  group_by(P_MODALIDADES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias))
+
+print(head(ranking_modalidades, 1))
+```
+1.1 Departamentos con mas denuncias en la modalidad de violencia contra la mujer e integridad familiar
+```{r}
+library(dplyr)
+library(scales)
+
+# Filtramos por la modalidad, agrupamos por departamento y mostramos Top 10
+ranking_violencia_dpto <- mis_datos %>%
+  filter(P_MODALIDADES == "Violencia contra la mujer e integrantes") %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(10)
+
+# Imprimir el dataframe resultante
+print(ranking_violencia_dpto)
+```
+
+2.MODALIDADES CON MAS DENUNCIAS DESDE EL 2018 HASTA EL 2025 
+```{r}
+library(dplyr)
+
+top_10_modalidades_con_otros <- mis_datos %>%
+  group_by(P_MODALIDADES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(10)
+
+print(top_10_modalidades_con_otros)
+```
+2.1 GRAFICO DE BARRAS DE LAS MODALIDADES CON MAS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+grafico_top_modalidades <- ggplot(top_10_modalidades_con_otros, 
+                                 aes(x = Total_Denuncias, 
+                                     y = fct_reorder(P_MODALIDADES, Total_Denuncias))) +
+  geom_col(fill = "darkslateblue") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 10 Modalidades por Total de Denuncias (Incl. 'Otros')",
+    x = "Total de Denuncias",
+    y = "Modalidad"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_top_modalidades)
+```
+
+2.2 Departamentos con mas denuncias en la modalidad de  extorsion
+```{r}
+library(dplyr)
+library(scales)
+
+# Filtramos por la modalidad "Extorsion", agrupamos por departamento
+# Sumamos la cantidad, ordenamos y mostramos Top 10
+ranking_extorsion_dpto <- mis_datos %>%
+  filter(P_MODALIDADES == "Extorsión") %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(20)
+
+# Imprimir el dataframe resultante
+print(ranking_extorsion_dpto)
+```
+
+3.DEPARTAMENTOS CON MAS DENUNCIAS DESDE EL 2018 HASTA EL 2025
+```{r}
+library(dplyr)
+
+# Agrupamos por departamento, sumamos la cantidad y mostramos el Top 5
+top_5_departamentos <- mis_datos %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(20)
+
+# Imprimimos la tabla resultante
+print(top_5_departamentos)
+```
+3.1 GRAFICO DE BARRAS DE LOS DEPARTAMENTOS CON MAS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+grafico_top_deptos <- ggplot(top_5_departamentos, 
+                             aes(x = Total_Denuncias, 
+                                 y = fct_reorder(DPTO_HECHO_NEW, Total_Denuncias))) +
+  geom_col(fill = "steelblue") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 6 Departamentos por Total de Denuncias",
+    x = "Total de Denuncias",
+    y = "Departamento"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_top_deptos)
+```
+
+
+
+
+4. DEPARTAMENTO CON MENOS DENUNCIAS DESDE EL 2018 HASTA EL 2025
+```{r}
+library(dplyr)
+
+departamento_menor <- mis_datos %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(Total_Denuncias) %>%
+  head(10)
+
+print(departamento_menor)
+```
+4.1 GRAFICO DE BARRAS DE LOS DEPARTAMENTOS CON MENOS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+# Usamos fct_reorder() para ordenar los departamentos de menor a mayor
+grafico_deptos_menor <- ggplot(departamento_menor, 
+                               aes(x = Total_Denuncias, 
+                                   y = fct_reorder(DPTO_HECHO_NEW, Total_Denuncias))) +
+  geom_col(fill = "tomato") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 10 Departamentos con Menos Denuncias Registradas",
+    x = "Total de Denuncias",
+    y = "Departamento"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_deptos_menor)
+```
+
+5.PROVINCIA CON MAS DENUNCIAS DESDE EL 2018 HASTA EL 2025
+```{r}
+library(dplyr)
+library(scales)
+
+# Calcular el Top 10
+top_10_provincias <- mis_datos %>%
+  group_by(PROV_HECHO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(20)
+
+# Imprimir el dataframe resultante de forma normal
+print(top_10_provincias)
+```
+5.1 GRAFICO DE BARRAS DE LAS PROVINCIAS CON MAS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+grafico_top_provincias <- ggplot(top_10_provincias, 
+                                 aes(x = Total_Denuncias, 
+                                     y = fct_reorder(PROV_HECHO, Total_Denuncias))) +
+  geom_col(fill = "darkred") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 10 Provincias por Total de Denuncias",
+    x = "Total de Denuncias",
+    y = "Provincia"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_top_provincias)
+```
+6.Distrito con mas denuncias desde el 2018 hasta el 2025
+```{r}
+library(dplyr)
+library(scales)
+
+# Calcular el Top 20
+top_20_distritos <- mis_datos %>%
+  group_by(DIST_HECHO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(20)
+
+# Imprimir el dataframe resultante
+print(top_20_distritos)
+```
+6.1 GRAFICO DE BARRAS DE LOS DISTRITOS CON MAS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+grafico_top_distritos <- ggplot(top_20_distritos, 
+                                 aes(x = Total_Denuncias, 
+                                     y = fct_reorder(DIST_HECHO, Total_Denuncias))) +
+  geom_col(fill = "darkgreen") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 20 Distritos por Total de Denuncias",
+    x = "Total de Denuncias",
+    y = "Distrito"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_top_distritos)
+```
+7.Distritos  de lima con mas denuncias desde el 2018 hasta el 2025
+```{r}
+library(dplyr)
+library(scales)
+
+# Filtrar por "LIMA METROPOLITANA", agrupar por distrito y mostrar Top 10
+top_10_distritos_lima_metro <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "LIMA METROPOLITANA") %>%
+  group_by(DIST_HECHO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(10)
+
+# Imprimir el dataframe resultante
+print(top_10_distritos_lima_metro)
+```
+7.1 GRAFICO DE BARRAS DE LOS DISTRITOS DE LIMA CON MAS DENUNCIAS
+```{r}
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# Crear el gráfico de barras
+grafico_top_distritos_lima_metro <- ggplot(top_10_distritos_lima_metro, 
+                                 aes(x = Total_Denuncias, 
+                                     y = fct_reorder(DIST_HECHO, Total_Denuncias))) +
+  geom_col(fill = "darkblue") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 10 Distritos de LIMA METROPOLITANA por Total de Denuncias",
+    x = "Total de Denuncias",
+    y = "Distrito"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_top_distritos_lima_metro)
+```
+8.Distrito de lima con menos denuncias desde el 2018 hasta el 2025
+```{r}
+library(dplyr)
+library(scales)
+
+
+distritos_menos_denuncias_lima_metro <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "LIMA METROPOLITANA") %>%
+  group_by(DIST_HECHO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(Total_Denuncias) %>%
+  head(20)
+
+# Imprimir el dataframe resultante
+print(distritos_menos_denuncias_lima_metro)
+```
+#ANALISSIS DE HUANUCO
+9.Modalidad de denunciias mas comun en el departamento de HUANUCO
+```{r}
+library(dplyr)
+library(scales)
+
+# Corregido: Se añade "mis_datos %>%" al inicio
+# y se corrige el typo en "arrange()"
+top_modalidad_huanuco <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "HUANUCO") %>%
+  group_by(P_MODALIDADES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(10)
+
+# Imprimir el dataframe resultante
+print(top_modalidad_huanuco)
+```
+9.1Provincia de HUANUCO con mas denuncias
+```{r}
+library(dplyr)
+library(scales)
+
+# Filtramos por "HUANUCO", agrupamos por provincia
+# Sumamos la cantidad y ordenamos de mayor a menor
+top_provincias_huanuco <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "HUANUCO") %>%
+  group_by(PROV_HECHO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias))
+
+# Imprimir el dataframe resultante
+print(top_provincias_huanuco)
+```
+10. Año con mayor volumen de denuncias
+```{r}
+library(dplyr)
+library(scales)
+
+# Agrupamos por ANIO, sumamos la cantidad
+# y ordenamos de mayor a menor
+anio_mayor_volumen <- mis_datos %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Denuncias)) %>%
+  head(8)
+
+# Imprimir el dataframe resultante
+print(anio_mayor_volumen)
+```
+10.1 evolucion de denuncias por año
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Agrupamos por ANIO y sumamos la cantidad
+denuncias_por_anio <- mis_datos %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_anio <- ggplot(denuncias_por_anio, 
+                              aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "navy", size = 1.2) +
+  geom_point(color = "navy", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(denuncias_por_anio$ANIO), max(denuncias_por_anio$ANIO), 1)) +
+  labs(
+    title = "Evolución Total de Denuncias por Año (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_anio)
+```
+10.2 evolucion de denuncias por mes (grafico mas detallado)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(scales)
+
+# 1. Preparamos los datos (mismo paso que antes)
+denuncias_por_mes <- mis_datos %>%
+  group_by(ANIO, MES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE), .groups = 'drop') %>%
+  mutate(FECHA = make_date(year = ANIO, month = MES, day = 1)) %>%
+  arrange(FECHA)
+
+# 2. Creamos el gráfico de líneas MÁS DETALLADO
+grafico_lineas_detallado <- ggplot(denuncias_por_mes, aes(x = FECHA, y = Total_Denuncias)) +
+  
+  # Línea de datos mensuales (más delgada y semitransparente)
+  geom_line(color = "darkcyan", alpha = 0.6) +
+  
+  # Puntos de datos exactos de cada mes
+  geom_point(color = "darkcyan", size = 1, alpha = 0.8) +
+  
+  # Línea de TENDENCIA (roja) que suaviza las subidas y bajadas
+  geom_smooth(method = "loess", se = FALSE, color = "red", size = 1.2) +
+  
+  # Línea vertical para marcar el inicio de la pandemia (evento clave)
+  geom_vline(xintercept = as.Date("2020-03-15"), linetype = "dashed", color = "black", size = 0.8) +
+  
+  # Anotación (texto) para explicar la línea
+  annotate(
+    "text",
+    x = as.Date("2020-03-15"),
+    y = max(denuncias_por_mes$Total_Denuncias) * 0.9, # Ubica el texto arriba
+    label = "  Inicio Pandemia",
+    hjust = 0, # Alinea el texto a la derecha de la línea
+    color = "black"
+  ) +
+  
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  
+  labs(
+    title = "Evolución Mensual Detallada de Denuncias (2018-2025)",
+    subtitle = "Datos mensuales (azul), Tendencia general (rojo)",
+    x = "Fecha",
+    y = "Total de Denuncias Mensuales"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_detallado)
+```
+11.Evolución de Denuncias  (2018-2025)
+11.1 Evolución de Denuncias por Extorsión (2018-2025)
+```{r}
+library(ggplot2)
+library(scales)
+
+# Ahora sí encontrará 'mis_datos' y 'P_MODALIDADES'
+extorsion_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Extorsión") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+grafico_lineas_extorsion <- ggplot(extorsion_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "darkorange", size = 1.2) +
+  geom_point(color = "darkorange", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(extorsion_por_anio$ANIO, na.rm=TRUE), 
+                                  max(extorsion_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Extorsión (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias por Extorsión"
+  ) +
+  theme_minimal()
+
+print(grafico_lineas_extorsion)
+```
+11.2 Evolución de Denuncias de homicidios (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "Homicidios" y agrupamos por ANIO
+homicidios_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Homicidio") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_homicidios <- ggplot(homicidios_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "firebrick", size = 1.2) +
+  geom_point(color = "firebrick", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(homicidios_por_anio$ANIO, na.rm=TRUE), 
+                                  max(homicidios_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Homicidios (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias por Homicidios"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_homicidios)
+```
+11.3 Evolución de Denuncias de hurtos (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "Hurto" y agrupamos por ANIO
+hurto_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Hurto") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_hurto <- ggplot(hurto_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "blue", size = 1.2) +
+  geom_point(color = "blue", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(hurto_por_anio$ANIO, na.rm=TRUE), 
+                                  max(hurto_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Hurto (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias por Hurto"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_hurto)
+```
+11.4 Evolución de Denuncias de estafas (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "Estafa" y agrupamos por ANIO
+estafa_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Estafa") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_estafa <- ggplot(estafa_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "darkmagenta", size = 1.2) +
+  geom_point(color = "darkmagenta", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(estafa_por_anio$ANIO, na.rm=TRUE), 
+                                  max(estafa_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Estafa (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias por Estafa"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_estafa)
+```
+11.5 Evolución de Denuncias de robos (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "Robo" y agrupamos por ANIO
+robo_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Robo") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_robo <- ggplot(robo_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "darkgreen", size = 1.2) +
+  geom_point(color = "darkgreen", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(robo_por_anio$ANIO, na.rm=TRUE), 
+                                  max(robo_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Robo (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias por Robo"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_robo)
+```
+11.6 Evolución de Denuncias de violencia contra la mujer e integrantes (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por la modalidad y agrupamos por ANIO
+violencia_por_anio <- mis_datos %>%
+  filter(P_MODALIDADES == "Violencia contra la mujer e integrantes") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_violencia <- ggplot(violencia_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "purple", size = 1.2) +
+  geom_point(color = "purple", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(violencia_por_anio$ANIO, na.rm=TRUE), 
+                                  max(violencia_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias por Violencia contra la Mujer (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_violencia)
+```
+12.Ranking de crecimiento porcentual de modalidades entre 2018 y 2024
+```{r}
+library(tidyverse) # Carga dplyr y tidyr (para pivot_wider)
+library(scales)    # Para el formato de porcentaje
+
+# 1. Filtramos solo los años 2018 y 2024
+datos_comparativos <- mis_datos %>%
+  filter(ANIO %in% c(2018, 2024)) %>%
+  
+# 2. Agrupamos por modalidad y año
+  group_by(P_MODALIDADES, ANIO) %>%
+  summarise(Total_Anual = sum(cantidad, na.rm = TRUE), .groups = 'drop') %>%
+  
+# 3. Pivoteamos los datos (de "largo" a "ancho")
+  pivot_wider(
+    names_from = ANIO, 
+    values_from = Total_Anual, 
+    names_prefix = "Total_",
+    values_fill = 0 # Rellena con 0 si no hubo denuncias ese año
+  ) %>%
+  
+# 4. Calculamos el crecimiento porcentual
+  mutate(
+    Crecimiento_Porcentual = (Total_2024 - Total_2018) / Total_2018 * 100
+  ) %>%
+  
+# 5. Ordenamos por el crecimiento porcentual (de mayor a menor)
+  arrange(desc(Crecimiento_Porcentual)) %>%
+  
+# 6. Damos un formato bonito al porcentaje (opcional)
+  mutate(
+    Crecimiento_Formato = percent(Crecimiento_Porcentual, scale = 1, accuracy = 0.1)
+  )
+
+# Imprimir el ranking de crecimiento
+print(datos_comparativos)
+```
+12.1 Gráfico de barras del crecimiento porcentual de modalidades entre 2018 y 2024
+```{r}
+library(tidyverse)
+library(scales)
+library(forcats)
+
+# --- 1. Preparar los datos (Repetimos el cálculo) ---
+datos_comparativos <- mis_datos %>%
+  filter(ANIO %in% c(2018, 2024)) %>%
+  group_by(P_MODALIDADES, ANIO) %>%
+  summarise(Total_Anual = sum(cantidad, na.rm = TRUE), .groups = 'drop') %>%
+  pivot_wider(
+    names_from = ANIO, 
+    values_from = Total_Anual, 
+    names_prefix = "Total_",
+    values_fill = 0 
+  ) %>%
+  mutate(
+    Crecimiento_Porcentual = (Total_2024 - Total_2018) / Total_2018 * 100,
+    # Variable para colorear las barras (positivo/negativo)
+    Crecimiento_Tipo = ifelse(Crecimiento_Porcentual > 0, "Crecimiento", "Decrecimiento")
+  ) %>%
+  arrange(desc(Crecimiento_Porcentual))
+
+# --- 2. Crear el Gráfico de Barras ---
+grafico_crecimiento <- ggplot(datos_comparativos, 
+                              aes(x = Crecimiento_Porcentual, 
+                                  y = fct_reorder(P_MODALIDADES, Crecimiento_Porcentual),
+                                  fill = Crecimiento_Tipo)) +
+  geom_col() +
+  # Asignar colores (rojo para decrecimiento, verde para crecimiento)
+  scale_fill_manual(values = c("Crecimiento" = "darkgreen", "Decrecimiento" = "firebrick")) +
+  # Formatear el eje X como porcentaje
+  scale_x_continuous(labels = percent_format(scale = 1, accuracy = 1)) +
+  labs(
+    title = "Crecimiento Porcentual de Denuncias (2024 vs 2018)",
+    subtitle = "Modalidades que más rápido han crecido o decrecido",
+    x = "Crecimiento Porcentual (%)",
+    y = "Modalidad"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Ocultar leyenda de color
+
+# Imprimir el gráfico
+print(grafico_crecimiento)
+```
+13.Evolución de Denuncias en LIMA METROPOLITANA (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "LIMA METROPOLITANA" y agrupamos por ANIO
+lima_metro_por_anio <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "LIMA METROPOLITANA") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_lima_metro <- ggplot(lima_metro_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "blue", size = 1.2) +
+  geom_point(color = "blue", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(lima_metro_por_anio$ANIO, na.rm=TRUE), 
+                                  max(lima_metro_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias en LIMA METROPOLITANA (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_lima_metro)
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Preparamos los datos: Filtramos por "HUANUCO" y agrupamos por ANIO
+huanuco_por_anio <- mis_datos %>%
+  filter(DPTO_HECHO_NEW == "HUANUCO") %>%
+  group_by(ANIO) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Creamos el gráfico de líneas
+grafico_lineas_huanuco <- ggplot(huanuco_por_anio, 
+                                  aes(x = ANIO, y = Total_Denuncias)) +
+  geom_line(color = "forestgreen", size = 1.2) +
+  geom_point(color = "forestgreen", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(min(huanuco_por_anio$ANIO, na.rm=TRUE), 
+                                  max(huanuco_por_anio$ANIO, na.rm=TRUE), 
+                                  1)) +
+  labs(
+    title = "Evolución de Denuncias en HUÁNUCO (2018-2025)",
+    x = "Año",
+    y = "Total de Denuncias"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_lineas_huanuco)
+```
+14.Evolución de Denuncias por Mes (Estacionalidad) (2018-2025)
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Agrupamos por MES, sumamos la cantidad
+ranking_meses <- mis_datos %>%
+  group_by(MES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE))
+
+# 2. Convertimos el número del mes a Nombre (en español)
+meses_espanol_abr <- c("Ene", "Feb", "Mar", "Abr", "May", "Jun", 
+                       "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
+
+# Aplicamos los nombres como un factor ORDENADO cronológicamente
+ranking_meses <- ranking_meses %>%
+  mutate(MES_Nombre = factor(MES, levels = 1:12, labels = meses_espanol_abr, ordered = TRUE))
+
+# 3. Creamos el gráfico de LÍNEAS
+# Usamos 'group = 1' para que ggplot sepa que debe conectar todos los puntos
+grafico_linea_meses <- ggplot(ranking_meses, 
+                              aes(x = MES_Nombre, y = Total_Denuncias, group = 1)) +
+  geom_line(color = "darkgoldenrod", size = 1.2) +
+  geom_point(color = "darkgoldenrod", size = 2.5) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Estacionalidad de Denuncias (Histórico 2018-2025)",
+    subtitle = "Muestra el flujo de denuncias a lo largo de un año típico",
+    x = "Mes",
+    y = "Total de Denuncias Acumuladas"
+  ) +
+  theme_minimal()
+
+# Imprimir el gráfico
+print(grafico_linea_meses)
+```
+15.Modalidad con más denuncias por departamento 
+```{r}
+library(dplyr)
+
+# 1. Agrupamos por Departamento y Modalidad (EXCLUYENDO "Otros")
+datos_agrupados_dpto <- mis_datos %>%
+  filter(P_MODALIDADES != "Otros") %>%
+  group_by(DPTO_HECHO_NEW, P_MODALIDADES) %>%
+  summarise(Total_Modalidad = sum(cantidad, na.rm = TRUE), .groups = 'drop')
+
+# 2. Para CADA Departamento, encontramos la modalidad con el valor MÁXIMO
+modalidad_top_por_dpto_sin_otros <- datos_agrupados_dpto %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  slice_max(order_by = Total_Modalidad, n = 1) %>%
+  ungroup() %>%
+  arrange(DPTO_HECHO_NEW)
+
+# 3. Imprimir la tabla directamente en la consola (sin kable)
+print(modalidad_top_por_dpto_sin_otros)
+  
+```
+15.1 Departamento con más denuncias en la modalidad de extorsion
+```{r}
+library(dplyr)
+library(scales)
+
+# 1. Filtramos por la modalidad "Extorsion"
+# 2. Agrupamos por Departamento
+# 3. Sumamos la cantidad y ordenamos de mayor a menor
+ranking_extorsion_dpto <- mis_datos %>%
+  filter(P_MODALIDADES == "Extorsión") %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(Total_Extorsion = sum(cantidad, na.rm = TRUE)) %>%
+  arrange(desc(Total_Extorsion))
+
+# Imprimir el ranking completo (o usa head(10) para el Top 10)
+print(ranking_extorsion_dpto)
+```
+
 
 ```{r}
 library(dplyr)
 library(ggplot2)
-library(readr)
-```
+library(scales)
+library(viridis) # Para una buena paleta de colores
 
-```{r}
-data = read_csv("data/DATASET_Denuncias_Policiales_Enero 2018 a Agosto 2025.csv")
+# 1. Preparamos los datos
+datos_composicion <- mis_datos %>%
+  group_by(ANIO, P_MODALIDADES) %>%
+  summarise(Total_Denuncias = sum(cantidad, na.rm = TRUE), .groups = 'drop')
 
-data
-```
-```{r}
-data_distrito_huanuco = data %>%
-  filter(`DPTO_HECHO_NEW` == "HUANUCO") %>%
-  group_by(`DIST_HECHO`) %>%
-  summarise(cantidad = n()) %>%
-  arrange(desc(cantidad))
-
-figure_distrito_huanuco = data_distrito_huanuco %>% ggplot(aes(x = `DIST_HECHO`, y = `cantidad`)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+# 2. Creamos el gráfico de BARRAS APILADAS 100%
+# 'position = "fill"' es la clave para que sea 100%
+grafico_composicion <- ggplot(datos_composicion, 
+                              aes(x = ANIO, y = Total_Denuncias, fill = P_MODALIDADES)) +
+  
+  geom_col(position = "fill") +
+  
+  # Formateamos el eje Y como porcentaje
+  scale_y_continuous(labels = percent_format()) +
+  
+  # Asegurar que se muestren todos los años en el eje X
+  scale_x_continuous(breaks = seq(min(datos_composicion$ANIO, na.rm=TRUE), 
+                                  max(datos_composicion$ANIO, na.rm=TRUE), 
+                                  1)) +
+  
+  # Usamos una paleta de colores fácil de distinguir
+  scale_fill_viridis_d(option = "C") +
+  
+  labs(
+    title = "Composición Porcentual de Denuncias por Año",
+    subtitle = "Muestra el % de participación de cada modalidad",
+    x = "Año",
+    y = "Porcentaje del Total Anual",
+    fill = "Modalidad"
+  ) +
   theme_minimal() +
-  labs(title = "Número de Denuncias por Distrito en Huánuco",
-       x = "Distrito",
-       y = "Número de Denuncias") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  # Ponemos la leyenda al costado para mejor visualización
+  theme(legend.position = "right")
 
-figure_distrito_huanuco
+# Imprimir el gráfico
+print(grafico_composicion)
 ```
+
+### ESTADISTICA INFERENCIAL DE DENUNCIAS POLICIALES EN EL PERU (2018-2025)
