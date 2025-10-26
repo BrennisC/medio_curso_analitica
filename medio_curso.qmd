@@ -887,4 +887,1637 @@ grafico_composicion <- ggplot(datos_composicion,
 print(grafico_composicion)
 ```
 
-### ESTADISTICA INFERENCIAL DE DENUNCIAS POLICIALES EN EL PERU (2018-2025)
+### 6. ESTADÍSTICA INFERENCIAL
+
+La **estadística inferencial** permite hacer generalizaciones sobre una población a partir de la información obtenida de una muestra. A diferencia de la estadística descriptiva, que resume y describe los datos, la inferencial utiliza técnicas probabilísticas para extraer conclusiones y tomar decisiones bajo incertidumbre.
+
+#### 6.1 Estimación
+
+Esta sección explica cómo inferir parámetros poblacionales (como la media o proporción) a partir de estadísticos muestrales. El objetivo es obtener una aproximación razonable del valor real en la población.
+
+##### 6.1.1 Estimación y la Regla Empírica
+
+Introduce el concepto de **estimación puntual** (un único valor que estima un parámetro) y la **regla empírica o del 68–95–99.7%**, que describe cómo se distribuyen los datos en una distribución normal.
+
+La regla empírica establece que en una distribución normal:
+- Aproximadamente **68%** de los datos se encuentran dentro de **1 desviación estándar** de la media
+- Aproximadamente **95%** de los datos se encuentran dentro de **2 desviaciones estándar** de la media  
+- Aproximadamente **99.7%** de los datos se encuentran dentro de **3 desviaciones estándar** de la media
+
+```{r}
+#| warning: false
+#| message: false
+
+# Librerías necesarias
+library(tidyverse)
+library(ggplot2)
+library(scales)
+
+# Distribución Normal Estándar con Regla Empírica
+x <- seq(-4, 4, length.out = 1000)
+y <- dnorm(x)
+
+# Crear data frame
+df_normal <- data.frame(x = x, y = y)
+
+# Visualización de la Regla Empírica (68-95-99.7)
+ggplot(df_normal, aes(x = x, y = y)) +
+  # Curva normal
+  geom_line(color = "black", size = 1.2) +
+  
+  # Área 68% (±1σ)
+  geom_area(data = filter(df_normal, x >= -1 & x <= 1), 
+            fill = "lightblue", alpha = 0.7) +
+  
+  # Área 95% (±2σ)
+  geom_area(data = filter(df_normal, x >= -2 & x <= -1), 
+            fill = "lightgreen", alpha = 0.5) +
+  geom_area(data = filter(df_normal, x >= 1 & x <= 2), 
+            fill = "lightgreen", alpha = 0.5) +
+  
+  # Área 99.7% (±3σ)
+  geom_area(data = filter(df_normal, x >= -3 & x <= -2), 
+            fill = "lightyellow", alpha = 0.5) +
+  geom_area(data = filter(df_normal, x >= 2 & x <= 3), 
+            fill = "lightyellow", alpha = 0.5) +
+  
+  # Líneas verticales
+  geom_vline(xintercept = c(-3, -2, -1, 0, 1, 2, 3), 
+             linetype = "dashed", alpha = 0.7) +
+  
+  # Etiquetas
+  annotate("text", x = 0, y = 0.2, label = "68%", size = 4, fontface = "bold") +
+  annotate("text", x = -1.5, y = 0.05, label = "13.5%", size = 3) +
+  annotate("text", x = 1.5, y = 0.05, label = "13.5%", size = 3) +
+  annotate("text", x = -2.5, y = 0.02, label = "2.35%", size = 3) +
+  annotate("text", x = 2.5, y = 0.02, label = "2.35%", size = 3) +
+  
+  # Etiquetas del eje x
+  scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3),
+                     labels = c("-3σ", "-2σ", "-σ", "μ", "σ", "2σ", "3σ")) +
+  
+  labs(
+    title = "Regla Empírica - Distribución Normal",
+    subtitle = "68% - 95% - 99.7% de los datos",
+    x = "Desviaciones estándar",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+```
+
+##### 6.1.2 Nivel de Confianza y Alfa
+
+Explica los conceptos de **nivel de confianza (1−α)** y **nivel de significancia (α)**. El nivel de confianza mide el grado de seguridad con el que se estima un parámetro, mientras que el alfa representa el riesgo de cometer un error al tomar decisiones estadísticas.
+
+- **Nivel de Confianza (1-α)**: Es la probabilidad de que el intervalo de confianza contenga el verdadero valor del parámetro poblacional. Los valores más comunes son 90%, 95% y 99%.
+
+- **Nivel de Significancia (α)**: Es la probabilidad de cometer un error al rechazar una hipótesis verdadera. Representa el área en las colas de la distribución.
+
+```{r}
+#| warning: false
+#| message: false
+
+# Visualización de Nivel de Confianza y Alfa
+x <- seq(-4, 4, length.out = 1000)
+y <- dnorm(x)
+df <- data.frame(x = x, y = y)
+
+# Valores críticos para 95% de confianza
+z_critico <- qnorm(0.975)
+
+# Gráfico de área de confianza y alfa
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  
+  # Área de confianza (95%)
+  geom_area(data = filter(df, x >= -z_critico & x <= z_critico), 
+            fill = "lightblue", alpha = 0.7) +
+  
+  # Áreas de alfa (5% total, 2.5% cada cola)
+  geom_area(data = filter(df, x <= -z_critico), 
+            fill = "red", alpha = 0.5) +
+  geom_area(data = filter(df, x >= z_critico), 
+            fill = "red", alpha = 0.5) +
+  
+  # Líneas verticales
+  geom_vline(xintercept = c(-z_critico, z_critico), 
+             color = "red", linetype = "dashed", size = 1) +
+  
+  # Etiquetas
+  annotate("text", x = 0, y = 0.2, label = "95%\nConfianza", 
+           size = 5, fontface = "bold", color = "blue") +
+  annotate("text", x = -2.5, y = 0.05, label = "α/2 = 2.5%", 
+           size = 4, color = "red") +
+  annotate("text", x = 2.5, y = 0.05, label = "α/2 = 2.5%", 
+           size = 4, color = "red") +
+  annotate("text", x = -z_critico, y = -0.02, 
+           label = paste("z =", round(-z_critico, 2)), 
+           size = 3, hjust = 0.5) +
+  annotate("text", x = z_critico, y = -0.02, 
+           label = paste("z =", round(z_critico, 2)), 
+           size = 3, hjust = 0.5) +
+  
+  labs(
+    title = "Nivel de Confianza y Nivel de Significancia (α)",
+    subtitle = "Distribución Normal Estándar - 95% de Confianza",
+    x = "Valores Z",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+```
+
+##### 6.1.3 Construcción del Intervalo de Confianza
+
+Aquí se detalla cómo calcular los **intervalos de confianza (IC)** para estimar el rango dentro del cual se espera que se encuentre el verdadero valor poblacional. Se describe la fórmula general del IC y la interpretación de sus límites.
+
+Un intervalo de confianza es un rango de valores que, con cierta probabilidad, contiene el verdadero valor del parámetro poblacional. La fórmula general es:
+
+**IC = Estimador ± (Valor crítico × Error estándar)**
+
+La interpretación correcta es: "Si repitiéramos este proceso de muestreo muchas veces, aproximadamente el 95% de los intervalos construidos contendrían el verdadero valor del parámetro."
+
+```{r}
+#| warning: false
+#| message: false
+
+# Simulación de muestras y construcción de IC
+set.seed(123)
+n_muestras <- 20
+n <- 30  # tamaño de muestra
+media_pob <- 100
+sd_pob <- 15
+
+# Generar múltiples muestras
+muestras <- replicate(n_muestras, rnorm(n, media_pob, sd_pob), simplify = FALSE)
+
+# Calcular estadísticas e IC para cada muestra
+resultados <- map_dfr(1:n_muestras, function(i) {
+  muestra <- muestras[[i]]
+  media_muestra <- mean(muestra)
+  error_estandar <- sd_pob / sqrt(n)
+  
+  # IC 95%
+  z_critico <- qnorm(0.975)
+  ic_inferior <- media_muestra - z_critico * error_estandar
+  ic_superior <- media_muestra + z_critico * error_estandar
+  
+  # ¿Contiene la media poblacional?
+  contiene_mu <- (ic_inferior <= media_pob & ic_superior >= media_pob)
+  
+  data.frame(
+    muestra = i,
+    media_muestra = media_muestra,
+    ic_inferior = ic_inferior,
+    ic_superior = ic_superior,
+    contiene_mu = contiene_mu
+  )
+})
+
+# Visualización de múltiples IC
+ggplot(resultados, aes(x = muestra, y = media_muestra, color = contiene_mu)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ic_inferior, ymax = ic_superior), width = 0.2) +
+  geom_hline(yintercept = media_pob, color = "red", size = 1.2, linetype = "solid") +
+  
+  scale_color_manual(values = c("FALSE" = "red", "TRUE" = "blue"),
+                     labels = c("No contiene μ", "Contiene μ")) +
+  
+  labs(
+    title = "Intervalos de Confianza del 95% para la Media",
+    subtitle = paste("De", n_muestras, "intervalos,", 
+                     sum(resultados$contiene_mu), "contienen μ = 100"),
+    x = "Número de muestra",
+    y = "Valor",
+    color = "IC contiene μ"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+##### 6.1.4 Intervalo de Confianza para una Media
+
+Se enseña a calcular el IC de la media poblacional (μ) cuando se conoce o desconoce la desviación estándar. Incluye el uso de la **distribución normal (Z)** y de la **distribución t de Student** para muestras pequeñas.
+
+**Casos para el IC de una media:**
+
+1. **σ conocida y n ≥ 30**: Usar distribución Z
+   - IC = x̄ ± z_{α/2} × (σ/√n)
+
+2. **σ desconocida o n < 30**: Usar distribución t
+   - IC = x̄ ± t_{α/2,gl} × (s/√n)
+   - Donde gl = n - 1 (grados de libertad)
+
+```{r}
+#| warning: false
+#| message: false
+
+# Comparación distribuciones Z vs t
+x <- seq(-4, 4, length.out = 1000)
+y_z <- dnorm(x)
+y_t5 <- dt(x, df = 5)
+y_t15 <- dt(x, df = 15)
+y_t30 <- dt(x, df = 30)
+
+df_comp <- data.frame(
+  x = rep(x, 4),
+  y = c(y_z, y_t5, y_t15, y_t30),
+  distribucion = rep(c("Normal (Z)", "t (gl=5)", "t (gl=15)", "t (gl=30)"), each = length(x))
+)
+
+# Gráfico comparativo
+ggplot(df_comp, aes(x = x, y = y, color = distribucion)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c("blue", "red", "orange", "green")) +
+  labs(
+    title = "Comparación: Distribución Normal vs t de Student",
+    subtitle = "Efecto de los grados de libertad en la distribución t",
+    x = "Valores",
+    y = "Densidad",
+    color = "Distribución"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+# Tabla de valores críticos
+valores_criticos <- data.frame(
+  "Confianza" = c("90%", "95%", "99%"),
+  "α" = c("0.10", "0.05", "0.01"),
+  "Z" = c(qnorm(0.95), qnorm(0.975), qnorm(0.995)),
+  "t (gl=5)" = c(qt(0.95, 5), qt(0.975, 5), qt(0.995, 5)),
+  "t (gl=15)" = c(qt(0.95, 15), qt(0.975, 15), qt(0.995, 15)),
+  "t (gl=30)" = c(qt(0.95, 30), qt(0.975, 30), qt(0.995, 30))
+)
+
+knitr::kable(valores_criticos, digits = 3, 
+             caption = "Valores Críticos para Intervalos de Confianza")
+```
+
+##### 6.1.5 Intervalo de Confianza para una Proporción
+
+Explica cómo construir intervalos de confianza para **proporciones poblacionales (p)**, usando fórmulas específicas basadas en la distribución binomial y normal.
+
+Para proporciones poblacionales, cuando n es suficientemente grande (np ≥ 5 y n(1-p) ≥ 5), se puede usar la aproximación normal:
+
+**IC para proporción = p̂ ± z_{α/2} × √[p̂(1-p̂)/n]**
+
+Donde:
+- p̂ = proporción muestral = x/n
+- x = número de éxitos
+- n = tamaño de la muestra
+
+```{r}
+#| warning: false
+#| message: false
+
+# Distribución muestral de proporciones
+p <- 0.3  # proporción poblacional
+n_vals <- c(30, 50, 100, 200)
+
+# Generar distribuciones para diferentes tamaños de muestra
+dist_props <- map_dfr(n_vals, function(n) {
+  # Parámetros de la distribución normal aproximada
+  media <- p
+  se <- sqrt(p * (1 - p) / n)
+  
+  # Valores para la curva
+  x_vals <- seq(max(0, p - 4*se), min(1, p + 4*se), length.out = 200)
+  y_vals <- dnorm(x_vals, mean = media, sd = se)
+  
+  data.frame(
+    x = x_vals,
+    y = y_vals,
+    n = paste("n =", n),
+    se = se
+  )
+})
+
+# Gráfico de distribuciones muestrales
+ggplot(dist_props, aes(x = x, y = y, color = n)) +
+  geom_line(size = 1.2) +
+  geom_vline(xintercept = p, linetype = "dashed", color = "black") +
+  
+  scale_x_continuous(labels = percent_format()) +
+  
+  labs(
+    title = "Distribución Muestral de Proporciones",
+    subtitle = paste("Proporción poblacional p =", percent(p)),
+    x = "Proporción muestral (p̂)",
+    y = "Densidad",
+    color = "Tamaño de muestra"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+# IC para proporción con diferentes niveles de confianza
+p_hat <- 0.35
+n <- 100
+niveles_conf <- c(0.90, 0.95, 0.99)
+
+ic_props <- map_dfr(niveles_conf, function(conf) {
+  alpha <- 1 - conf
+  z <- qnorm(1 - alpha/2)
+  se <- sqrt(p_hat * (1 - p_hat) / n)
+  
+  ic_inf <- p_hat - z * se
+  ic_sup <- p_hat + z * se
+  
+  data.frame(
+    confianza = paste0(conf*100, "%"),
+    p_hat = p_hat,
+    ic_inferior = ic_inf,
+    ic_superior = ic_sup,
+    amplitud = ic_sup - ic_inf
+  )
+})
+
+# Visualización de IC para proporciones
+ggplot(ic_props, aes(x = confianza, y = p_hat)) +
+  geom_point(size = 4, color = "blue") +
+  geom_errorbar(aes(ymin = ic_inferior, ymax = ic_superior), 
+                width = 0.2, size = 1.2, color = "blue") +
+  
+  scale_y_continuous(labels = percent_format()) +
+  
+  labs(
+    title = "Intervalos de Confianza para una Proporción",
+    subtitle = paste("p̂ =", percent(p_hat), ", n =", n),
+    x = "Nivel de Confianza",
+    y = "Proporción"
+  ) +
+  theme_minimal()
+```
+
+##### 6.1.6 Métodos Avanzados para Intervalos de Confianza de Proporciones
+
+```{r}
+#| warning: false
+#| message: false
+
+# Comparación de diferentes métodos para IC de proporciones
+p_hat <- 0.35
+n <- 50  # muestra pequeña para mostrar diferencias
+
+# Método 1: Wald (normal) - método estándar
+z_val <- qnorm(0.975)
+se_wald <- sqrt(p_hat * (1 - p_hat) / n)
+ic_wald_lower <- p_hat - z_val * se_wald
+ic_wald_upper <- p_hat + z_val * se_wald
+
+# Método 2: Wilson (score) - más robusto
+z2 <- z_val^2
+ic_wilson_center <- (p_hat + z2/(2*n)) / (1 + z2/n)
+ic_wilson_margin <- z_val * sqrt((p_hat*(1-p_hat) + z2/(4*n)) / (n * (1 + z2/n)))
+ic_wilson_lower <- ic_wilson_center - ic_wilson_margin
+ic_wilson_upper <- ic_wilson_center + ic_wilson_margin
+
+# Método 3: Clopper-Pearson (exacto) - basado en distribución binomial
+x <- round(p_hat * n)
+ic_exact_lower <- qbeta(0.025, x, n - x + 1)
+ic_exact_upper <- qbeta(0.975, x + 1, n - x)
+
+# Crear tabla comparativa
+metodos_ic <- data.frame(
+  Método = c("Wald (Normal)", "Wilson (Score)", "Clopper-Pearson (Exacto)"),
+  Límite_Inferior = c(ic_wald_lower, ic_wilson_lower, ic_exact_lower),
+  Límite_Superior = c(ic_wald_upper, ic_wilson_upper, ic_exact_upper),
+  Amplitud = c(ic_wald_upper - ic_wald_lower, 
+               ic_wilson_upper - ic_wilson_lower,
+               ic_exact_upper - ic_exact_lower)
+)
+
+# Visualización comparativa
+metodos_ic$Metodo_num <- 1:3
+metodos_ic$p_hat <- p_hat
+
+ggplot(metodos_ic, aes(x = Metodo_num, y = p_hat, color = Método)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = Límite_Inferior, ymax = Límite_Superior), 
+                width = 0.2, size = 1.2) +
+  scale_x_continuous(breaks = 1:3, labels = c("Wald", "Wilson", "Exacto")) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_color_manual(values = c("blue", "red", "darkgreen")) +
+  labs(
+    title = "Comparación de Métodos para IC de Proporciones",
+    subtitle = paste("p̂ =", percent(p_hat), ", n =", n),
+    x = "Método",
+    y = "Proporción",
+    color = "Método"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+knitr::kable(metodos_ic[,1:4], digits = 4, 
+             caption = "Comparación de Intervalos de Confianza para Proporciones")
+```
+
+##### 6.1.7 Tamaño de Muestra para Proporciones
+
+```{r}
+#| warning: false
+#| message: false
+
+# Función para calcular tamaño de muestra para proporción
+calc_n_proporcion <- function(p, e, conf_level = 0.95) {
+  z <- qnorm((1 + conf_level) / 2)
+  n <- (z^2 * p * (1 - p)) / e^2
+  return(ceiling(n))
+}
+
+# Diferentes escenarios
+proporciones <- c(0.1, 0.3, 0.5, 0.7, 0.9)
+errores <- c(0.01, 0.03, 0.05, 0.10)
+
+# Crear matriz de tamaños de muestra
+tabla_n_prop <- expand.grid(p = proporciones, e = errores)
+tabla_n_prop$n <- mapply(calc_n_proporcion, tabla_n_prop$p, tabla_n_prop$e)
+
+# Visualización del efecto de p y e en el tamaño de muestra
+ggplot(tabla_n_prop, aes(x = factor(p), y = n, fill = factor(e))) +
+  geom_col(position = "dodge", alpha = 0.8) +
+  scale_fill_brewer(type = "seq", palette = "Reds", name = "Error (e)") +
+  scale_y_log10() +
+  labs(
+    title = "Tamaño de Muestra Requerido para Proporciones",
+    subtitle = "Nivel de confianza del 95%",
+    x = "Proporción poblacional (p)",
+    y = "Tamaño de muestra (n) - Escala log",
+    fill = "Margen de error"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# Caso especial: p = 0.5 (máxima variabilidad)
+p_max_var <- 0.5
+n_conservador <- sapply(errores, function(e) calc_n_proporcion(p_max_var, e))
+
+tabla_conservador <- data.frame(
+  "Margen_Error" = paste0("±", errores * 100, "%"),
+  "Tamaño_Muestra" = n_conservador
+)
+
+knitr::kable(tabla_conservador, 
+             caption = "Tamaño de Muestra Conservador (p = 0.5)")
+```
+
+##### 6.1.8 Intervalos de Confianza para Diferencia de Proporciones
+
+```{r}
+#| warning: false
+#| message: false
+
+# Simulación de dos grupos para comparar proporciones
+set.seed(123)
+n1_dif <- 150
+n2_dif <- 120
+p1_real <- 0.4
+p2_real <- 0.25
+
+# Simular datos
+x1_dif <- rbinom(1, n1_dif, p1_real)
+x2_dif <- rbinom(1, n2_dif, p2_real)
+
+p1_hat_dif <- x1_dif / n1_dif
+p2_hat_dif <- x2_dif / n2_dif
+
+# Diferencia de proporciones
+diff_prop <- p1_hat_dif - p2_hat_dif
+
+# IC para diferencia de proporciones
+se_diff_ic <- sqrt((p1_hat_dif * (1 - p1_hat_dif) / n1_dif) + 
+                   (p2_hat_dif * (1 - p2_hat_dif) / n2_dif))
+
+z_crit_dif <- qnorm(0.975)
+ic_diff_lower <- diff_prop - z_crit_dif * se_diff_ic
+ic_diff_upper <- diff_prop + z_crit_dif * se_diff_ic
+
+# Visualización de las dos proporciones y su diferencia
+datos_dos_prop <- data.frame(
+  grupo = c("Grupo 1", "Grupo 2", "Diferencia"),
+  proporcion = c(p1_hat_dif, p2_hat_dif, diff_prop),
+  ic_lower = c(p1_hat_dif - z_crit_dif * sqrt(p1_hat_dif * (1-p1_hat_dif) / n1_dif),
+               p2_hat_dif - z_crit_dif * sqrt(p2_hat_dif * (1-p2_hat_dif) / n2_dif),
+               ic_diff_lower),
+  ic_upper = c(p1_hat_dif + z_crit_dif * sqrt(p1_hat_dif * (1-p1_hat_dif) / n1_dif),
+               p2_hat_dif + z_crit_dif * sqrt(p2_hat_dif * (1-p2_hat_dif) / n2_dif),
+               ic_diff_upper),
+  tipo = c("Individual", "Individual", "Diferencia")
+)
+
+ggplot(datos_dos_prop, aes(x = grupo, y = proporcion, color = tipo)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = ic_lower, ymax = ic_upper), width = 0.2, size = 1.2) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+  scale_color_manual(values = c("blue", "red")) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Intervalos de Confianza para Diferencia de Proporciones",
+    subtitle = paste("IC 95% para p₁ - p₂ = [", 
+                     round(ic_diff_lower, 3), ", ", 
+                     round(ic_diff_upper, 3), "]"),
+    x = "Comparación",
+    y = "Proporción",
+    color = "Tipo"
+  ) +
+  theme_minimal()
+```
+
+##### 6.1.9 Efectos del Tamaño de Muestra en IC de Proporciones
+
+```{r}
+#| warning: false
+#| message: false
+
+# Demostrar cómo cambia el IC con diferentes tamaños de muestra
+p_fijo <- 0.3
+tamaños_n <- c(25, 50, 100, 200, 500, 1000)
+
+# Calcular IC para cada tamaño de muestra
+resultados_n <- map_dfr(tamaños_n, function(n) {
+  se <- sqrt(p_fijo * (1 - p_fijo) / n)
+  ic_lower <- p_fijo - qnorm(0.975) * se
+  ic_upper <- p_fijo + qnorm(0.975) * se
+  
+  data.frame(
+    n = n,
+    p_hat = p_fijo,
+    ic_lower = ic_lower,
+    ic_upper = ic_upper,
+    amplitud = ic_upper - ic_lower
+  )
+})
+
+# Visualización del efecto del tamaño de muestra
+ggplot(resultados_n, aes(x = factor(n), y = p_hat)) +
+  geom_point(size = 3, color = "red") +
+  geom_errorbar(aes(ymin = ic_lower, ymax = ic_upper), width = 0.2) +
+  geom_text(aes(label = paste("±", round((ic_upper - ic_lower)/2 * 100, 1), "%")), 
+            vjust = -0.5, size = 3) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Efecto del Tamaño de Muestra en IC de Proporciones",
+    subtitle = paste("Proporción fija p =", percent(p_fijo)),
+    x = "Tamaño de muestra (n)",
+    y = "Proporción con IC 95%"
+  ) +
+  theme_minimal()
+
+# Gráfico de amplitud vs tamaño de muestra
+ggplot(resultados_n, aes(x = n, y = amplitud)) +
+  geom_line(color = "blue", size = 1.2) +
+  geom_point(size = 3, color = "red") +
+  scale_x_log10() +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Amplitud del IC vs Tamaño de Muestra",
+    subtitle = "Relación inversa con √n",
+    x = "Tamaño de muestra (n) - Escala log",
+    y = "Amplitud del IC"
+  ) +
+  theme_minimal()
+
+# Tabla de resultados
+knitr::kable(resultados_n, digits = 4, 
+             caption = "Efecto del Tamaño de Muestra en IC de Proporciones")
+```
+
+#### 6.2 Contraste de Hipótesis
+
+Introduce el proceso formal para evaluar **afirmaciones o teorías** acerca de una población mediante el análisis de datos muestrales. Se define el procedimiento general de una **prueba de hipótesis estadística**.
+
+El contraste de hipótesis es un procedimiento estadístico que permite tomar decisiones sobre parámetros poblacionales basándose en la evidencia proporcionada por una muestra. Es fundamental en la investigación científica para validar o refutar teorías.
+
+##### 6.2.1 Pasos del Contraste de Hipótesis
+
+Presenta los **5 pasos fundamentales**:
+
+1. **Plantear la hipótesis nula (H₀) y la alternativa (H₁)**
+2. **Seleccionar el nivel de significancia (α)**
+3. **Elegir el estadístico de prueba adecuado**
+4. **Calcular el valor p o estadístico**
+5. **Tomar una decisión (rechazar o no rechazar H₀)**
+
+**Hipótesis:**
+- **H₀ (Hipótesis Nula)**: Afirmación que se asume verdadera hasta que la evidencia demuestre lo contrario
+- **H₁ (Hipótesis Alternativa)**: Afirmación que se acepta si se rechaza H₀
+
+**Tipos de contraste:**
+- **Bilateral**: H₁: μ ≠ μ₀ (diferente)
+- **Unilateral derecho**: H₁: μ > μ₀ (mayor)
+- **Unilateral izquierdo**: H₁: μ < μ₀ (menor)
+
+```{r}
+#| warning: false
+#| message: false
+
+# Visualización conceptual de las hipótesis
+# H0: μ = μ0 vs H1: μ ≠ μ0 (bilateral)
+
+mu0 <- 0  # valor bajo H0
+x <- seq(-4, 4, length.out = 1000)
+y <- dnorm(x)
+df_hip <- data.frame(x = x, y = y)
+
+# Región crítica para α = 0.05
+alpha <- 0.05
+z_critico <- qnorm(1 - alpha/2)
+
+ggplot(df_hip, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  
+  # Región de aceptación
+  geom_area(data = filter(df_hip, x >= -z_critico & x <= z_critico), 
+            fill = "lightgreen", alpha = 0.7) +
+  
+  # Regiones críticas (de rechazo)
+  geom_area(data = filter(df_hip, x <= -z_critico), 
+            fill = "red", alpha = 0.7) +
+  geom_area(data = filter(df_hip, x >= z_critico), 
+            fill = "red", alpha = 0.7) +
+  
+  # Líneas críticas
+  geom_vline(xintercept = c(-z_critico, z_critico), 
+             color = "red", linetype = "dashed", size = 1) +
+  
+  # Etiquetas
+  annotate("text", x = 0, y = 0.2, 
+           label = "Región de\nAceptación H₀", 
+           size = 4, fontface = "bold", color = "darkgreen") +
+  annotate("text", x = -2.5, y = 0.05, 
+           label = "Región de\nRechazo", 
+           size = 3, color = "red") +
+  annotate("text", x = 2.5, y = 0.05, 
+           label = "Región de\nRechazo", 
+           size = 3, color = "red") +
+  annotate("text", x = -z_critico, y = -0.03, 
+           label = paste("-z =", round(-z_critico, 2)), 
+           size = 3) +
+  annotate("text", x = z_critico, y = -0.03, 
+           label = paste("z =", round(z_critico, 2)), 
+           size = 3) +
+  
+  labs(
+    title = "Contraste de Hipótesis Bilateral",
+    subtitle = "H₀: μ = μ₀  vs  H₁: μ ≠ μ₀  (α = 0.05)",
+    x = "Estadístico de prueba (Z)",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+# Contraste unilateral (cola derecha)
+ggplot(df_hip, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  
+  # Región de aceptación
+  geom_area(data = filter(df_hip, x <= qnorm(0.95)), 
+            fill = "lightgreen", alpha = 0.7) +
+  
+  # Región crítica
+  geom_area(data = filter(df_hip, x >= qnorm(0.95)), 
+            fill = "red", alpha = 0.7) +
+  
+  # Línea crítica
+  geom_vline(xintercept = qnorm(0.95), 
+             color = "red", linetype = "dashed", size = 1) +
+  
+  # Etiquetas
+  annotate("text", x = -1, y = 0.2, 
+           label = "Región de\nAceptación H₀", 
+           size = 4, fontface = "bold", color = "darkgreen") +
+  annotate("text", x = 2.5, y = 0.1, 
+           label = "Región de\nRechazo\nα = 5%", 
+           size = 3, color = "red") +
+  annotate("text", x = qnorm(0.95), y = -0.03, 
+           label = paste("z =", round(qnorm(0.95), 2)), 
+           size = 3) +
+  
+  labs(
+    title = "Contraste de Hipótesis Unilateral (Cola Derecha)",
+    subtitle = "H₀: μ ≤ μ₀  vs  H₁: μ > μ₀  (α = 0.05)",
+    x = "Estadístico de prueba (Z)",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+```
+
+##### 6.2.2 Contraste de Hipótesis para una Media
+
+Muestra cómo comparar la **media muestral** con una **media teórica o poblacional conocida**, usando **pruebas Z o t**, según el tamaño de la muestra y la varianza conocida.
+
+**Condiciones para el contraste:**
+
+1. **Prueba Z** (σ conocida o n ≥ 30):
+   - Estadístico: Z = (x̄ - μ₀)/(σ/√n)
+
+2. **Prueba t** (σ desconocida y n < 30):
+   - Estadístico: t = (x̄ - μ₀)/(s/√n)
+   - Grados de libertad: gl = n - 1
+
+**Criterio de decisión:**
+- Si |estadístico| > valor crítico → Rechazar H₀
+- Si valor p < α → Rechazar H₀
+
+```{r}
+#| warning: false
+#| message: false
+
+# Demostración del cálculo del estadístico t
+# Ejemplo: μ₀ = 50, x̄ = 52, s = 8, n = 25
+
+mu0 <- 50
+x_bar <- 52
+s <- 8
+n <- 25
+gl <- n - 1
+
+# Estadístico t calculado
+t_calc <- (x_bar - mu0) / (s / sqrt(n))
+
+# Distribución t con gl grados de libertad
+x <- seq(-4, 4, length.out = 1000)
+y_t <- dt(x, df = gl)
+df_t <- data.frame(x = x, y = y_t)
+
+# Valor crítico para α = 0.05 bilateral
+t_critico <- qt(0.975, df = gl)
+
+# Crear datos para las áreas
+df_aceptacion <- df_t[df_t$x >= -t_critico & df_t$x <= t_critico, ]
+df_rechazo_izq <- df_t[df_t$x <= -t_critico, ]
+df_rechazo_der <- df_t[df_t$x >= t_critico, ]
+
+ggplot(df_t, aes(x = x, y = y_t)) +
+  geom_line(color = "black", size = 1.2) +
+  
+  # Región de aceptación
+  geom_area(data = df_aceptacion, 
+            aes(x = x, y = y_t), fill = "lightblue", alpha = 0.7) +
+  
+  # Regiones críticas
+  geom_area(data = df_rechazo_izq, 
+            aes(x = x, y = y_t), fill = "red", alpha = 0.7) +
+  geom_area(data = df_rechazo_der, 
+            aes(x = x, y = y_t), fill = "red", alpha = 0.7) +
+  
+  # Líneas críticas
+  geom_vline(xintercept = c(-t_critico, t_critico), 
+             color = "red", linetype = "dashed", size = 1) +
+  
+  # Estadístico calculado
+  geom_vline(xintercept = t_calc, 
+             color = "blue", size = 2) +
+  
+  # Etiquetas
+  annotate("text", x = t_calc, y = max(y_t) * 0.8, 
+           label = paste("t =", round(t_calc, 2)), 
+           size = 4, color = "blue", fontface = "bold") +
+  annotate("text", x = -t_critico, y = -0.02, 
+           label = paste("-t₀.₀₂₅ =", round(-t_critico, 2)), 
+           size = 3) +
+  annotate("text", x = t_critico, y = -0.02, 
+           label = paste("t₀.₀₂₅ =", round(t_critico, 2)), 
+           size = 3) +
+  
+  labs(
+    title = "Contraste t para una Media",
+    subtitle = paste("H₀: μ = 50, x̄ = 52, s = 8, n = 25, gl =", gl),
+    x = "Estadístico t",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+# Cálculo del valor p
+p_valor <- 2 * (1 - pt(abs(t_calc), df = gl))
+
+# Tabla de resultados
+resultados_t <- data.frame(
+  "Estadístico" = c("Media muestral (x̄)", "Desviación estándar (s)", 
+                    "Tamaño de muestra (n)", "Grados de libertad",
+                    "Estadístico t", "Valor crítico t₀.₀₂₅", "Valor p"),
+  "Valor" = c(x_bar, s, n, gl, round(t_calc, 3), round(t_critico, 3), round(p_valor, 4))
+)
+
+knitr::kable(resultados_t, caption = "Resultados del Contraste t")
+```
+
+##### 6.2.3 Contraste de Hipótesis para una Proporción
+
+Explica cómo comprobar si la **proporción observada** en una muestra difiere significativamente de la **proporción poblacional hipotética**, utilizando la distribución normal estándar.
+
+**Condiciones:**
+- n·p₀ ≥ 5 y n·(1-p₀) ≥ 5 (condición de normalidad)
+
+**Estadístico de prueba:**
+- Z = (p̂ - p₀)/√[p₀(1-p₀)/n]
+
+**Donde:**
+- p̂ = proporción muestral = x/n
+- p₀ = proporción bajo H₀
+- n = tamaño de la muestra
+
+```{r}
+#| warning: false
+#| message: false
+
+# Ejemplo: H₀: p = 0.30 vs H₁: p ≠ 0.30
+# Datos: n = 200, x = 72 (éxitos)
+
+p0 <- 0.30  # proporción bajo H₀
+n <- 200
+x <- 72
+p_hat <- x / n
+
+# Estadístico Z para proporciones
+z_calc <- (p_hat - p0) / sqrt(p0 * (1 - p0) / n)
+
+# Distribución normal estándar
+x_vals <- seq(-4, 4, length.out = 1000)
+y_vals <- dnorm(x_vals)
+df_z <- data.frame(x = x_vals, y = y_vals)
+
+# Valor crítico
+z_critico <- qnorm(0.975)
+
+ggplot(df_z, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  
+  # Región de aceptación
+  geom_area(data = filter(df_z, x >= -z_critico & x <= z_critico), 
+            fill = "lightgreen", alpha = 0.7) +
+  
+  # Regiones críticas
+  geom_area(data = filter(df_z, x <= -z_critico), 
+            fill = "red", alpha = 0.7) +
+  geom_area(data = filter(df_z, x >= z_critico), 
+            fill = "red", alpha = 0.7) +
+  
+  # Líneas críticas
+  geom_vline(xintercept = c(-z_critico, z_critico), 
+             color = "red", linetype = "dashed", size = 1) +
+  
+  # Estadístico calculado
+  geom_vline(xintercept = z_calc, 
+             color = "blue", size = 2) +
+  
+  # Etiquetas
+  annotate("text", x = z_calc, y = max(y_vals) * 0.8, 
+           label = paste("Z =", round(z_calc, 2)), 
+           size = 4, color = "blue", fontface = "bold") +
+  annotate("text", x = 0, y = 0.2, 
+           label = "Región de\nAceptación", 
+           size = 4, color = "darkgreen") +
+  
+  labs(
+    title = "Contraste Z para una Proporción",
+    subtitle = paste("H₀: p = 0.30, p̂ =", round(p_hat, 3), ", n =", n),
+    x = "Estadístico Z",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+# Valor p para el contraste bilateral
+p_valor_z <- 2 * (1 - pnorm(abs(z_calc)))
+
+# Tabla de resultados para proporciones
+resultados_prop <- data.frame(
+  "Estadístico" = c("Proporción muestral (p̂)", "Proporción bajo H₀ (p₀)", 
+                    "Tamaño de muestra (n)", "Estadístico Z", 
+                    "Valor crítico Z₀.₀₂₅", "Valor p"),
+  "Valor" = c(round(p_hat, 3), p0, n, round(z_calc, 3), 
+              round(z_critico, 3), round(p_valor_z, 4))
+)
+
+knitr::kable(resultados_prop, caption = "Resultados del Contraste para Proporción")
+```
+
+##### 6.2.4 Tipos de Error
+
+Describe los dos tipos de error más comunes:
+
+- **Error tipo I (α)**: Rechazar una hipótesis nula que es verdadera
+- **Error tipo II (β)**: No rechazar una hipótesis nula que es falsa
+
+También se menciona el **poder estadístico**, que mide la capacidad del test para detectar efectos reales.
+
+**Conceptos clave:**
+
+- **Error Tipo I (α)**: "Falso positivo" - Concluir que hay efecto cuando no lo hay
+- **Error Tipo II (β)**: "Falso negativo" - No detectar un efecto que sí existe  
+- **Poder estadístico (1-β)**: Probabilidad de rechazar H₀ cuando es falsa
+- **Relación inversa**: Si α disminuye → β aumenta (para n y efecto fijos)
+
+```{r}
+#| warning: false
+#| message: false
+
+# Visualización de errores Tipo I y Tipo II
+mu0 <- 0  # H₀: μ = 0
+mu1 <- 2  # H₁: μ = 2 (valor real)
+sigma <- 1
+alpha <- 0.05
+
+# Distribuciones bajo H₀ y H₁
+x <- seq(-4, 6, length.out = 1000)
+y_h0 <- dnorm(x, mean = mu0, sd = sigma)
+y_h1 <- dnorm(x, mean = mu1, sd = sigma)
+
+# Valor crítico
+z_critico <- qnorm(1 - alpha)
+
+# Data frame para las curvas
+df_errores <- data.frame(
+  x = rep(x, 2),
+  y = c(y_h0, y_h1),
+  hipotesis = rep(c("H₀: μ = 0", "H₁: μ = 2"), each = length(x))
+)
+
+ggplot(df_errores, aes(x = x, y = y, color = hipotesis)) +
+  geom_line(size = 1.5) +
+  
+  # Error Tipo I (rechazar H₀ siendo verdadera)
+  geom_area(data = data.frame(x = x[x >= z_critico], 
+                              y = y_h0[x >= z_critico]),
+            aes(x = x, y = y), fill = "red", alpha = 0.5, 
+            inherit.aes = FALSE) +
+  
+  # Error Tipo II (aceptar H₀ siendo falsa)
+  geom_area(data = data.frame(x = x[x <= z_critico], 
+                              y = y_h1[x <= z_critico]),
+            aes(x = x, y = y), fill = "orange", alpha = 0.5, 
+            inherit.aes = FALSE) +
+  
+  # Línea crítica
+  geom_vline(xintercept = z_critico, 
+             linetype = "dashed", color = "black", size = 1) +
+  
+  # Etiquetas
+  annotate("text", x = 2.5, y = 0.15, 
+           label = "Error Tipo I\n(α)", 
+           size = 4, color = "red", fontface = "bold") +
+  annotate("text", x = 0.5, y = 0.05, 
+           label = "Error Tipo II\n(β)", 
+           size = 4, color = "orange", fontface = "bold") +
+  annotate("text", x = z_critico, y = -0.02, 
+           label = "Valor crítico", 
+           size = 3, hjust = 0.5) +
+  
+  scale_color_manual(values = c("blue", "red")) +
+  
+  labs(
+    title = "Tipos de Error en Contraste de Hipótesis",
+    subtitle = "Error Tipo I (α) y Error Tipo II (β)",
+    x = "Valores",
+    y = "Densidad",
+    color = "Hipótesis"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    legend.position = "top"
+  )
+
+# Tabla de tipos de error
+tabla_errores <- data.frame(
+  " " = c("Decisión: Aceptar H₀", "Decisión: Rechazar H₀"),
+  "H₀ es Verdadera" = c("✓ Decisión Correcta", "✗ Error Tipo I (α)"),
+  "H₀ es Falsa" = c("✗ Error Tipo II (β)", "✓ Decisión Correcta"),
+  check.names = FALSE
+)
+
+knitr::kable(tabla_errores, caption = "Matriz de Decisiones y Tipos de Error")
+
+# Cálculo de potencia (1 - β)
+beta <- pnorm(z_critico, mean = mu1, sd = sigma)
+potencia <- 1 - beta
+
+# Tabla de parámetros
+tabla_parametros <- data.frame(
+  "Parámetro" = c("Error Tipo I (α)", "Error Tipo II (β)", "Potencia (1-β)"),
+  "Valor" = c(round(alpha, 3), round(beta, 3), round(potencia, 3)),
+  "Interpretación" = c(
+    "Probabilidad de rechazar H₀ siendo verdadera",
+    "Probabilidad de aceptar H₀ siendo falsa", 
+    "Probabilidad de rechazar H₀ siendo falsa"
+  )
+)
+
+knitr::kable(tabla_parametros, caption = "Parámetros del Contraste de Hipótesis")
+```
+
+#### 6.3 Comparación de Dos Poblaciones
+
+##### 6.3.1 Comparación de Dos Medias (Muestras Independientes)
+
+```{r}
+#| warning: false
+#| message: false
+
+# Simulación de dos muestras independientes
+set.seed(123)
+n1 <- 25
+n2 <- 30
+mu1 <- 100
+mu2 <- 105
+sigma1 <- 12
+sigma2 <- 15
+
+muestra1 <- rnorm(n1, mu1, sigma1)
+muestra2 <- rnorm(n2, mu2, sigma2)
+
+# Estadísticas muestrales
+x1_bar <- mean(muestra1)
+x2_bar <- mean(muestra2)
+s1 <- sd(muestra1)
+s2 <- sd(muestra2)
+
+# Prueba t para dos muestras (varianzas iguales asumidas)
+# H0: μ1 = μ2 vs H1: μ1 ≠ μ2
+
+# Varianza combinada
+sp <- sqrt(((n1-1)*s1^2 + (n2-1)*s2^2) / (n1+n2-2))
+se_diff <- sp * sqrt(1/n1 + 1/n2)
+
+# Estadístico t
+t_calc <- (x1_bar - x2_bar) / se_diff
+gl <- n1 + n2 - 2
+
+# Visualización de las dos muestras
+datos_dos_muestras <- data.frame(
+  valores = c(muestra1, muestra2),
+  grupo = rep(c("Muestra 1", "Muestra 2"), c(n1, n2))
+)
+
+ggplot(datos_dos_muestras, aes(x = grupo, y = valores, fill = grupo)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, color = "red") +
+  scale_fill_manual(values = c("lightblue", "lightcoral")) +
+  labs(
+    title = "Comparación de Dos Muestras Independientes",
+    subtitle = paste("x̄₁ =", round(x1_bar, 2), ", x̄₂ =", round(x2_bar, 2)),
+    x = "Grupos",
+    y = "Valores",
+    fill = "Muestra"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Distribución del estadístico t
+x_t <- seq(-4, 4, length.out = 1000)
+y_t_comp <- dt(x_t, df = gl)
+df_t_comp <- data.frame(x = x_t, y = y_t_comp)
+
+t_critico_comp <- qt(0.975, df = gl)
+
+# Crear áreas para el gráfico
+df_acept_comp <- df_t_comp[df_t_comp$x >= -t_critico_comp & df_t_comp$x <= t_critico_comp, ]
+df_rech_izq_comp <- df_t_comp[df_t_comp$x <= -t_critico_comp, ]
+df_rech_der_comp <- df_t_comp[df_t_comp$x >= t_critico_comp, ]
+
+ggplot(df_t_comp, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  geom_area(data = df_acept_comp, aes(x = x, y = y), fill = "lightgreen", alpha = 0.7) +
+  geom_area(data = df_rech_izq_comp, aes(x = x, y = y), fill = "red", alpha = 0.7) +
+  geom_area(data = df_rech_der_comp, aes(x = x, y = y), fill = "red", alpha = 0.7) +
+  geom_vline(xintercept = t_calc, color = "blue", size = 2) +
+  geom_vline(xintercept = c(-t_critico_comp, t_critico_comp), 
+             color = "red", linetype = "dashed") +
+  annotate("text", x = t_calc, y = max(y_t_comp) * 0.8, 
+           label = paste("t =", round(t_calc, 2)), 
+           color = "blue", fontface = "bold") +
+  labs(
+    title = "Contraste t para Dos Medias Independientes",
+    subtitle = paste("H₀: μ₁ = μ₂, gl =", gl),
+    x = "Estadístico t",
+    y = "Densidad"
+  ) +
+  theme_minimal()
+```
+
+##### 6.3.2 Comparación de Dos Proporciones
+
+```{r}
+#| warning: false
+#| message: false
+
+# Datos para comparar dos proporciones
+# Grupo 1: n1 = 200, x1 = 45 éxitos
+# Grupo 2: n2 = 180, x2 = 54 éxitos
+
+n1_prop <- 200
+x1_prop <- 45
+n2_prop <- 180
+x2_prop <- 54
+
+p1_hat <- x1_prop / n1_prop
+p2_hat <- x2_prop / n2_prop
+
+# Proporción combinada
+p_combined <- (x1_prop + x2_prop) / (n1_prop + n2_prop)
+
+# Error estándar de la diferencia
+se_diff_prop <- sqrt(p_combined * (1 - p_combined) * (1/n1_prop + 1/n2_prop))
+
+# Estadístico Z
+z_calc_prop <- (p1_hat - p2_hat) / se_diff_prop
+
+# Visualización de las proporciones
+datos_prop <- data.frame(
+  grupo = c("Grupo 1", "Grupo 2"),
+  proporcion = c(p1_hat, p2_hat),
+  n = c(n1_prop, n2_prop),
+  exitos = c(x1_prop, x2_prop)
+)
+
+# Intervalos de confianza para cada proporción
+datos_prop$ic_lower <- datos_prop$proporcion - qnorm(0.975) * 
+  sqrt(datos_prop$proporcion * (1 - datos_prop$proporcion) / datos_prop$n)
+datos_prop$ic_upper <- datos_prop$proporcion + qnorm(0.975) * 
+  sqrt(datos_prop$proporcion * (1 - datos_prop$proporcion) / datos_prop$n)
+
+ggplot(datos_prop, aes(x = grupo, y = proporcion, color = grupo)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = ic_lower, ymax = ic_upper), width = 0.2) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(
+    title = "Comparación de Dos Proporciones",
+    subtitle = paste("p̂₁ =", percent(p1_hat), ", p̂₂ =", percent(p2_hat)),
+    x = "Grupos",
+    y = "Proporción",
+    color = "Grupo"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+#### 6.4 Análisis de Varianza (ANOVA)
+
+##### 6.4.1 ANOVA de Un Factor
+
+```{r}
+#| warning: false
+#| message: false
+
+# Simulación de datos para ANOVA de un factor
+set.seed(123)
+n_grupos <- 4
+n_por_grupo <- 15
+
+# Generar datos para 4 grupos con diferentes medias
+grupo1 <- rnorm(n_por_grupo, mean = 20, sd = 5)
+grupo2 <- rnorm(n_por_grupo, mean = 25, sd = 5)
+grupo3 <- rnorm(n_por_grupo, mean = 22, sd = 5)
+grupo4 <- rnorm(n_por_grupo, mean = 28, sd = 5)
+
+datos_anova <- data.frame(
+  valor = c(grupo1, grupo2, grupo3, grupo4),
+  grupo = factor(rep(c("A", "B", "C", "D"), each = n_por_grupo))
+)
+
+# Realizar ANOVA
+modelo_anova <- aov(valor ~ grupo, data = datos_anova)
+resumen_anova <- summary(modelo_anova)
+
+# Visualización de los grupos
+ggplot(datos_anova, aes(x = grupo, y = valor, fill = grupo)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, color = "red") +
+  scale_fill_brewer(type = "qual", palette = "Set2") +
+  labs(
+    title = "ANOVA de Un Factor",
+    subtitle = paste("F =", round(resumen_anova[[1]][["F value"]][1], 2),
+                     ", p =", format.pval(resumen_anova[[1]][["Pr(>F)"]][1], digits = 3)),
+    x = "Grupos",
+    y = "Valores",
+    fill = "Grupo"
+  ) +
+  theme_minimal()
+
+# Distribución F para el estadístico ANOVA
+gl1 <- n_grupos - 1  # grados de libertad del numerador
+gl2 <- n_grupos * (n_por_grupo - 1)  # grados de libertad del denominador
+
+x_f <- seq(0, 8, length.out = 1000)
+y_f <- df(x_f, df1 = gl1, df2 = gl2)
+df_f <- data.frame(x = x_f, y = y_f)
+
+f_critico <- qf(0.95, df1 = gl1, df2 = gl2)
+f_calculado <- resumen_anova[[1]][["F value"]][1]
+
+# Crear áreas para la distribución F
+df_acept_f <- df_f[df_f$x <= f_critico, ]
+df_rech_f <- df_f[df_f$x >= f_critico, ]
+
+ggplot(df_f, aes(x = x, y = y)) +
+  geom_line(color = "black", size = 1.2) +
+  geom_area(data = df_acept_f, aes(x = x, y = y), fill = "lightgreen", alpha = 0.7) +
+  geom_area(data = df_rech_f, aes(x = x, y = y), fill = "red", alpha = 0.7) +
+  geom_vline(xintercept = f_calculado, color = "blue", size = 2) +
+  geom_vline(xintercept = f_critico, color = "red", linetype = "dashed") +
+  annotate("text", x = f_calculado, y = max(y_f) * 0.8, 
+           label = paste("F =", round(f_calculado, 2)), 
+           color = "blue", fontface = "bold") +
+  labs(
+    title = "Distribución F para ANOVA",
+    subtitle = paste("gl₁ =", gl1, ", gl₂ =", gl2),
+    x = "Estadístico F",
+    y = "Densidad"
+  ) +
+  theme_minimal()
+```
+
+#### 6.5 Correlación y Regresión
+
+##### 6.5.1 Coeficiente de Correlación de Pearson
+
+```{r}
+#| warning: false
+#| message: false
+
+# Generar datos correlacionados
+set.seed(123)
+n_corr <- 50
+x_corr <- rnorm(n_corr, 50, 10)
+y_corr <- 2 * x_corr + rnorm(n_corr, 0, 8)
+
+# Calcular correlación
+r_pearson <- cor(x_corr, y_corr)
+
+# Prueba de significancia para correlación
+# H0: ρ = 0 vs H1: ρ ≠ 0
+t_corr <- r_pearson * sqrt((n_corr - 2) / (1 - r_pearson^2))
+gl_corr <- n_corr - 2
+
+datos_corr <- data.frame(x = x_corr, y = y_corr)
+
+ggplot(datos_corr, aes(x = x, y = y)) +
+  geom_point(alpha = 0.7, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  annotate("text", x = min(x_corr), y = max(y_corr), 
+           label = paste("r =", round(r_pearson, 3)), 
+           hjust = 0, vjust = 1, size = 5, fontface = "bold") +
+  labs(
+    title = "Correlación de Pearson",
+    subtitle = paste("n =", n_corr, ", t =", round(t_corr, 2)),
+    x = "Variable X",
+    y = "Variable Y"
+  ) +
+  theme_minimal()
+
+# Interpretación de diferentes correlaciones
+correlaciones <- c(-0.9, -0.5, 0, 0.5, 0.9)
+interpretaciones <- c("Negativa fuerte", "Negativa moderada", "Sin correlación", 
+                      "Positiva moderada", "Positiva fuerte")
+
+tabla_corr <- data.frame(
+  "Coeficiente r" = correlaciones,
+  "Interpretación" = interpretaciones,
+  check.names = FALSE
+)
+
+knitr::kable(tabla_corr, caption = "Interpretación del Coeficiente de Correlación")
+```
+
+##### 6.5.2 Regresión Lineal Simple
+
+```{r}
+#| warning: false
+#| message: false
+
+# Modelo de regresión lineal
+modelo_reg <- lm(y ~ x, data = datos_corr)
+resumen_reg <- summary(modelo_reg)
+
+# Coeficientes
+beta0 <- coef(modelo_reg)[1]  # intercepto
+beta1 <- coef(modelo_reg)[2]  # pendiente
+
+# Intervalos de confianza para los coeficientes
+ic_coef <- confint(modelo_reg)
+
+# Visualización con intervalos de confianza
+ggplot(datos_corr, aes(x = x, y = y)) +
+  geom_point(alpha = 0.7, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, level = 0.95, 
+              fill = "lightblue", color = "red") +
+  geom_smooth(method = "lm", se = TRUE, level = 0.99, 
+              fill = "lightcoral", alpha = 0.3, color = "red") +
+  annotate("text", x = min(x_corr), y = max(y_corr), 
+           label = paste("ŷ =", round(beta0, 2), "+", round(beta1, 2), "x"), 
+           hjust = 0, vjust = 1, size = 4, fontface = "bold") +
+  annotate("text", x = min(x_corr), y = max(y_corr) - 10, 
+           label = paste("R² =", round(resumen_reg$r.squared, 3)), 
+           hjust = 0, vjust = 1, size = 4) +
+  labs(
+    title = "Regresión Lineal Simple",
+    subtitle = "Intervalos de confianza 95% (azul) y 99% (coral)",
+    x = "Variable Independiente (X)",
+    y = "Variable Dependiente (Y)"
+  ) +
+  theme_minimal()
+
+# Análisis de residuos
+residuos <- residuals(modelo_reg)
+valores_ajustados <- fitted(modelo_reg)
+
+datos_residuos <- data.frame(
+  ajustados = valores_ajustados,
+  residuos = residuos,
+  estandarizados = scale(residuos)[,1]
+)
+
+# Gráfico de residuos
+ggplot(datos_residuos, aes(x = ajustados, y = residuos)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_smooth(se = FALSE, color = "blue") +
+  labs(
+    title = "Análisis de Residuos",
+    subtitle = "Verificación de supuestos de regresión",
+    x = "Valores Ajustados",
+    y = "Residuos"
+  ) +
+  theme_minimal()
+```
+
+#### 6.6 Tamaño de Muestra y Potencia
+
+##### 6.6.1 Cálculo de Tamaño de Muestra
+
+```{r}
+#| warning: false
+#| message: false
+
+# Función para calcular tamaño de muestra para una media
+calc_n_media <- function(alpha, beta, delta, sigma) {
+  z_alpha <- qnorm(1 - alpha/2)
+  z_beta <- qnorm(1 - beta)
+  n <- ((z_alpha + z_beta) * sigma / delta)^2
+  return(ceiling(n))
+}
+
+# Parámetros para el cálculo
+alphas <- c(0.01, 0.05, 0.10)
+betas <- c(0.05, 0.10, 0.20)
+delta <- 5  # diferencia a detectar
+sigma <- 15  # desviación estándar
+
+# Crear tabla de tamaños de muestra
+tabla_n <- expand.grid(alpha = alphas, beta = betas)
+tabla_n$potencia <- 1 - tabla_n$beta
+tabla_n$n <- mapply(calc_n_media, tabla_n$alpha, tabla_n$beta, delta, sigma)
+
+# Visualización del efecto de α y β en el tamaño de muestra
+ggplot(tabla_n, aes(x = factor(alpha), y = n, fill = factor(potencia))) +
+  geom_col(position = "dodge", alpha = 0.8) +
+  geom_text(aes(label = n), position = position_dodge(width = 0.9), 
+            vjust = -0.3, size = 3) +
+  scale_fill_brewer(type = "seq", palette = "Blues") +
+  labs(
+    title = "Tamaño de Muestra Requerido",
+    subtitle = paste("Para detectar diferencia δ =", delta, ", σ =", sigma),
+    x = "Nivel de Significancia (α)",
+    y = "Tamaño de Muestra (n)",
+    fill = "Potencia (1-β)"
+  ) +
+  theme_minimal()
+
+knitr::kable(tabla_n, digits = 3, 
+             caption = "Tamaños de Muestra para Diferentes Niveles de α y β")
+```
+
+```{r}
+#| warning: false
+#| message: false
+
+# 7.1 Tendencia por departamento
+tendencias_depto <- mis_datos %>%
+  group_by(DPTO_HECHO_NEW, ANIO) %>%
+  summarise(
+    total_anual = sum(cantidad),
+    .groups = 'drop'
+  ) %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  mutate(
+    cambio_porcentual = (total_anual - lag(total_anual)) / lag(total_anual) * 100
+  )
+
+# Top 10 departamentos por tasa de crecimiento promedio
+top_crecimiento <- tendencias_depto %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(
+    crecimiento_promedio = mean(cambio_porcentual, na.rm = TRUE)
+  ) %>%
+  arrange(desc(crecimiento_promedio)) %>%
+  head(10)
+
+# Visualización de tendencias para top departamentos
+ggplot(
+  tendencias_depto %>% 
+    filter(DPTO_HECHO_NEW %in% top_crecimiento$DPTO_HECHO_NEW)
+) +
+  geom_line(aes(x = ANIO, y = total_anual, color = DPTO_HECHO_NEW), size = 1) +
+  geom_point(aes(x = ANIO, y = total_anual, color = DPTO_HECHO_NEW)) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Tendencias de Denuncias en Top 10 Departamentos",
+    subtitle = "Departamentos con mayor tasa de crecimiento promedio",
+    x = "Año",
+    y = "Total de denuncias",
+    color = "Departamento"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+# 7.2 Análisis de variabilidad por departamento
+variabilidad_depto <- mis_datos %>%
+  group_by(DPTO_HECHO_NEW, ANIO, MES) %>%
+  summarise(
+    total_mensual = sum(cantidad),
+    .groups = 'drop'
+  ) %>%
+  group_by(DPTO_HECHO_NEW) %>%
+  summarise(
+    media = mean(total_mensual),
+    cv = sd(total_mensual) / mean(total_mensual) * 100,
+    ic_lower = mean(total_mensual) - qt(0.975, n()-1) * sd(total_mensual)/sqrt(n()),
+    ic_upper = mean(total_mensual) + qt(0.975, n()-1) * sd(total_mensual)/sqrt(n())
+  ) %>%
+  arrange(desc(cv))
+
+# Visualización de coeficiente de variación
+ggplot(head(variabilidad_depto, 15), 
+       aes(x = reorder(DPTO_HECHO_NEW, cv), y = cv)) +
+  geom_col(fill = "steelblue", alpha = 0.7) +
+  coord_flip() +
+  labs(
+    title = "Variabilidad en Denuncias por Departamento",
+    subtitle = "Top 15 departamentos con mayor coeficiente de variación",
+    x = NULL,
+    y = "Coeficiente de Variación (%)"
+  ) +
+  theme_minimal()
+```
+
+#### 8. Análisis por Provincia
+
+```{r}
+#| warning: false
+#| message: false
+
+# 8.1 Top provincias por incidencia
+top_provincias <- mis_datos %>%
+  group_by(PROV_HECHO_NEW) %>%
+  summarise(
+    total = sum(cantidad),
+    n_meses = n_distinct(ANIO, MES),
+    promedio_mensual = total / n_meses,
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(promedio_mensual)) %>%
+  head(15)
+
+# Visualización de top provincias
+ggplot(top_provincias, 
+       aes(x = reorder(PROV_HECHO_NEW, promedio_mensual), 
+           y = promedio_mensual)) +
+  geom_col(fill = "darkred", alpha = 0.7) +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Top 15 Provincias por Promedio Mensual de Denuncias",
+    x = NULL,
+    y = "Promedio mensual de denuncias"
+  ) +
+  theme_minimal()
+
+# 8.2 Análisis de tendencias por provincia principal
+principales_provincias <- top_provincias$PROV_HECHO_NEW[1:6]
+
+tendencias_provincia <- mis_datos %>%
+  filter(PROV_HECHO_NEW %in% principales_provincias) %>%
+  group_by(PROV_HECHO_NEW, ANIO) %>%
+  summarise(
+    total_anual = sum(cantidad),
+    .groups = 'drop'
+  )
+
+# Modelo de regresión lineal para cada provincia
+library(broom)
+
+modelos_provincia <- tendencias_provincia %>%
+  group_by(PROV_HECHO_NEW) %>%
+  do(tidy(lm(total_anual ~ ANIO, data = .))) %>%
+  filter(term == "ANIO") %>%
+  mutate(
+    significativo = p.value < 0.05,
+    tendencia = if_else(estimate > 0, "Creciente", "Decreciente")
+  )
+
+# Visualización de tendencias con líneas de regresión
+ggplot(tendencias_provincia, 
+       aes(x = ANIO, y = total_anual, color = PROV_HECHO_NEW)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = TRUE, alpha = 0.2) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Tendencias en Principales Provincias",
+    subtitle = "Con intervalos de confianza 95%",
+    x = "Año",
+    y = "Total de denuncias",
+    color = "Provincia"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+# 8.3 Análisis de estacionalidad por provincia
+estacionalidad_provincia <- mis_datos %>%
+  filter(PROV_HECHO_NEW %in% principales_provincias) %>%
+  group_by(PROV_HECHO_NEW, MES) %>%
+  summarise(
+    promedio_mensual = mean(cantidad),
+    .groups = 'drop'
+  )
+
+# Visualización de patrones estacionales
+ggplot(estacionalidad_provincia, 
+       aes(x = factor(MES), y = promedio_mensual, 
+           group = PROV_HECHO_NEW, color = PROV_HECHO_NEW)) +
+  geom_line() +
+  geom_point() +
+  scale_x_discrete(labels = month.abb) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Patrones Estacionales por Provincia Principal",
+    x = "Mes",
+    y = "Promedio de denuncias",
+    color = "Provincia"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  )
+```
+
+#### 9. Análisis de Correlaciones Espaciales
+
+```{r}
+#| warning: false
+#| message: false
+
+# 9.1 Correlación entre provincias vecinas
+# Seleccionar provincias principales y sus vecinas
+provincias_principales <- mis_datos %>%
+  filter(PROV_HECHO_NEW %in% principales_provincias) %>%
+  group_by(PROV_HECHO_NEW, ANIO, MES) %>%
+  summarise(
+    denuncias = sum(cantidad),
+    .groups = 'drop'
+  ) %>%
+  pivot_wider(
+    names_from = PROV_HECHO_NEW,
+    values_from = denuncias
+  )
+
+# Matriz de correlación
+library(corrplot)
+cor_matrix <- cor(provincias_principales[,-c(1,2)], use = "complete.obs")
+
+# Visualización de correlaciones
+corrplot(cor_matrix, 
+         method = "color",
+         type = "upper",
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         diag = FALSE,
+         title = "Correlaciones entre Provincias Principales",
+         mar = c(0,0,2,0))
+```
